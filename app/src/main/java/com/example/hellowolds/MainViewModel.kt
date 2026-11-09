@@ -20,37 +20,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         private set
 
     init {
-        // Initialize Spotify state from saved preferences
-        val savedClientId = prefs.getString("client_id", "") ?: ""
-        spotifyState = spotifyState.copy(clientId = savedClientId)
-
-        if (savedClientId.isNotEmpty() && hasStoredToken()) {
+        if (hasStoredToken()) {
             checkAndFetchSpotifyData()
         }
     }
 
-    fun setSpotifyClientId(newId: String) {
-        prefs.edit().putString("client_id", newId.trim()).apply()
-        spotifyState = spotifyState.copy(clientId = newId.trim(), error = null)
-    }
-
     fun startSpotifyAuth() {
-        val clientId = spotifyState.clientId.ifEmpty {
-            prefs.getString("client_id", "") ?: ""
-        }
-
-        if (clientId.isBlank()) {
-            spotifyState = spotifyState.copy(error = "Please enter your Spotify Client ID first.")
-            return
-        }
-
         val codeVerifier = SpotifyManager.generateCodeVerifier()
         val codeChallenge = SpotifyManager.generateCodeChallenge(codeVerifier)
 
         // Store verifier for token exchange
         prefs.edit().putString("code_verifier", codeVerifier).apply()
 
-        val authUrl = SpotifyManager.buildAuthUrl(clientId, codeChallenge)
+        val authUrl = SpotifyManager.buildAuthUrl(SpotifyManager.CLIENT_ID, codeChallenge)
         spotifyState = spotifyState.copy(
             authUrlToLoad = authUrl,
             isLoading = false,
@@ -78,9 +60,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             if (code != null) {
-                val savedClientId = spotifyState.clientId.ifEmpty {
-                    prefs.getString("client_id", "") ?: ""
-                }
                 val codeVerifier = prefs.getString("code_verifier", null)
 
                 if (codeVerifier == null) {
@@ -93,7 +72,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
                 viewModelScope.launch {
                     spotifyState = spotifyState.copy(isLoading = true, error = null)
-                    val tokenResult = SpotifyManager.exchangeCodeForToken(code, savedClientId, codeVerifier)
+                    val tokenResult = SpotifyManager.exchangeCodeForToken(code, SpotifyManager.CLIENT_ID, codeVerifier)
 
                     tokenResult.onSuccess { tokenResp ->
                         val expiresAt = System.currentTimeMillis() + (tokenResp.expiresIn * 1000L)
@@ -125,12 +104,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun checkAndFetchSpotifyData() {
-        val clientId = spotifyState.clientId.ifEmpty { prefs.getString("client_id", "") ?: "" }
+        val clientId = SpotifyManager.CLIENT_ID
         val accessToken = prefs.getString("access_token", null)
         val refreshToken = prefs.getString("refresh_token", null)
         val expiresAt = prefs.getLong("token_expires_at", 0L)
 
         if (accessToken == null) return
+        // Show "loading" right away, so the connect button doesn't flash while the token refreshes.
+        spotifyState = spotifyState.copy(isLoading = true, error = null)
 
         viewModelScope.launch {
             if (System.currentTimeMillis() >= expiresAt && !refreshToken.isNullOrEmpty() && clientId.isNotEmpty()) {

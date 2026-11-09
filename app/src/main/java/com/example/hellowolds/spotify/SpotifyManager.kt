@@ -13,6 +13,8 @@ import java.security.MessageDigest
 import java.security.SecureRandom
 
 object SpotifyManager {
+    /** Identifies this app to Spotify (from the Spotify Developer Dashboard). Not a secret: the same for every user. */
+    const val CLIENT_ID = "7e34a846ce014407b51feaaf4694be32"
     const val REDIRECT_URI = "com.example.hellowolds://spotify-callback"
     private const val SCOPES = "user-read-private user-read-email user-read-currently-playing user-library-read"
 

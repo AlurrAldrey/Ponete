@@ -39,6 +39,5 @@ data class SpotifyState(
     val currentlyPlaying: CurrentlyPlaying? = null,
     val albums: List<SpotifyAlbum> = emptyList(),
     val error: String? = null,
-    val clientId: String = "",
     val authUrlToLoad: String? = null
 )
