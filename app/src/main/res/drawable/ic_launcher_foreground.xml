@@ -1,30 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated pixel-art icon (17x17 grid of 3dp cells). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <path android:pathData="M31,63.928c0,0 6.4,-11 12.1,-13.1c7.2,-2.6 26,-1.4 26,-1.4l38.1,38.1L107,108.928l-32,-1L31,63.928z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:endX="85.84757"
-                android:endY="92.4963"
-                android:startX="42.9492"
-                android:startY="49.59793"
-                android:type="linear">
-                <item
-                    android:color="#44000000"
-                    android:offset="0.0" />
-                <item
-                    android:color="#00000000"
-                    android:offset="1.0" />
-            </gradient>
-        </aapt:attr>
-    </path>
-    <path
-        android:fillColor="#FFFFFF"
-        android:fillType="nonZero"
-        android:pathData="M65.3,45.828l3.8,-6.6c0.2,-0.4 0.1,-0.9 -0.3,-1.1c-0.4,-0.2 -0.9,-0.1 -1.1,0.3l-3.9,6.7c-6.3,-2.8 -13.4,-2.8 -19.7,0l-3.9,-6.7c-0.2,-0.4 -0.7,-0.5 -1.1,-0.3C38.8,38.328 38.7,38.828 38.9,39.228l3.8,6.6C36.2,49.428 31.7,56.028 31,63.928h46C76.3,56.028 71.8,49.428 65.3,45.828zM43.4,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2c-0.3,-0.7 -0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C45.3,56.528 44.5,57.328 43.4,57.328L43.4,57.328zM64.6,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2s-0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C66.5,56.528 65.6,57.328 64.6,57.328L64.6,57.328z"
-        android:strokeWidth="1"
-        android:strokeColor="#00000000" />
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#FF2A0A4A" android:pathData="M46.5,28.5h15v3h-15zM40.5,31.5h6v3h-6zM52.5,31.5h15v3h-15zM37.5,34.5h3v3h-3zM46.5,34.5h3v3h-3zM58.5,34.5h12v3h-12zM34.5,37.5h3v3h-3zM40.5,37.5h3v3h-3zM46.5,37.5h15v3h-15zM64.5,37.5h9v3h-9zM31.5,40.5h3v3h-3zM37.5,40.5h3v3h-3zM43.5,40.5h6v3h-6zM58.5,40.5h6v3h-6zM67.5,40.5h9v3h-9zM31.5,43.5h6v3h-6zM40.5,43.5h3v3h-3zM46.5,43.5h3v3h-3zM58.5,43.5h3v3h-3zM64.5,43.5h3v3h-3zM70.5,43.5h6v3h-6zM28.5,46.5h18v3h-18zM61.5,46.5h18v3h-18zM28.5,49.5h6v3h-6zM37.5,49.5h3v3h-3zM67.5,49.5h3v3h-3zM73.5,49.5h6v3h-6zM28.5,52.5h6v3h-6zM37.5,52.5h3v3h-3zM67.5,52.5h3v3h-3zM73.5,52.5h6v3h-6zM28.5,55.5h6v3h-6zM37.5,55.5h3v3h-3zM67.5,55.5h3v3h-3zM73.5,55.5h6v3h-6zM28.5,58.5h18v3h-18zM61.5,58.5h18v3h-18zM31.5,61.5h6v3h-6zM40.5,61.5h3v3h-3zM46.5,61.5h3v3h-3zM58.5,61.5h3v3h-3zM70.5,61.5h6v3h-6zM31.5,64.5h9v3h-9zM43.5,64.5h6v3h-6zM58.5,64.5h3v3h-3zM67.5,64.5h9v3h-9zM34.5,67.5h9v3h-9zM46.5,67.5h6v3h-6zM58.5,67.5h3v3h-3zM64.5,67.5h9v3h-9zM37.5,70.5h12v3h-12zM58.5,70.5h12v3h-12zM40.5,73.5h27v3h-27zM46.5,76.5h15v3h-15z" />
+    <path android:fillColor="#FF4E1F78" android:pathData="M49.5,34.5h9v3h-9zM43.5,37.5h3v3h-3zM61.5,37.5h3v3h-3zM40.5,40.5h3v3h-3zM49.5,40.5h9v3h-9zM64.5,40.5h3v3h-3zM37.5,43.5h3v3h-3zM43.5,43.5h3v3h-3zM61.5,43.5h3v3h-3zM67.5,43.5h3v3h-3zM34.5,49.5h3v3h-3zM40.5,49.5h3v3h-3zM64.5,49.5h3v3h-3zM70.5,49.5h3v3h-3zM34.5,52.5h3v3h-3zM40.5,52.5h3v3h-3zM64.5,52.5h3v3h-3zM70.5,52.5h3v3h-3zM34.5,55.5h3v3h-3zM40.5,55.5h3v3h-3zM64.5,55.5h3v3h-3zM70.5,55.5h3v3h-3zM37.5,61.5h3v3h-3zM43.5,61.5h3v3h-3zM61.5,61.5h3v3h-3zM67.5,61.5h3v3h-3zM40.5,64.5h3v3h-3zM49.5,64.5h9v3h-9zM64.5,64.5h3v3h-3zM43.5,67.5h3v3h-3zM61.5,67.5h3v3h-3zM49.5,70.5h9v3h-9z" />
+    <path android:fillColor="#FFFFD84D" android:pathData="M46.5,31.5h6v3h-6zM40.5,34.5h6v3h-6zM37.5,37.5h3v3h-3zM34.5,40.5h3v3h-3zM64.5,61.5h3v3h-3zM61.5,64.5h3v3h-3zM52.5,67.5h6v3h-6z" />
+    <path android:fillColor="#FFFFE9A8" android:pathData="M49.5,43.5h9v3h-9zM46.5,46.5h15v3h-15zM43.5,49.5h21v3h-21zM43.5,52.5h9v3h-9zM55.5,52.5h9v3h-9zM43.5,55.5h21v3h-21zM46.5,58.5h15v3h-15zM49.5,61.5h9v3h-9z" />
+    <path android:fillColor="#FFFF7A1A" android:pathData="M52.5,52.5h3v3h-3z" />
 </vector>

@@ -20,9 +20,17 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Release builds always talk to Spotify.
+        buildConfigField("boolean", "MOCK_SPOTIFY", "false")
     }
 
     buildTypes {
+        debug {
+            // Fake Spotify data for local testing; toggle with `mockSpotify` in gradle.properties.
+            val mock = (project.findProperty("mockSpotify") ?: "false").toString().toBoolean()
+            buildConfigField("boolean", "MOCK_SPOTIFY", mock.toString())
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -37,6 +45,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

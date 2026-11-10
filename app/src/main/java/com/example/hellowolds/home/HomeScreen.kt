@@ -636,6 +636,7 @@ private class ActionState {
 private class PreparedPick(val album: SpotifyAlbum, val load: Deferred<Pair<Bitmap?, HomeTheme?>>)
 
 private fun openInSpotify(context: Context, album: SpotifyAlbum) {
+    if (album.id.startsWith("mock-")) return // fake album (debug mock mode): nothing to open
     try {
         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://open.spotify.com/album/${album.id}")))
     } catch (_: Exception) {
@@ -648,7 +649,10 @@ fun HomeScreen(
     isLoading: Boolean,
     modifier: Modifier = Modifier,
     /** True when home replaces the loading screen: type the title in, spiral the colors, fade in the rest. */
-    intro: Boolean = false
+    intro: Boolean = false,
+    /** An album to show right away (from the "Disco del día" widget); cleared via [onAlbumOpened]. */
+    openAlbumId: String? = null,
+    onAlbumOpened: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val density = LocalDensity.current
@@ -738,6 +742,10 @@ fun HomeScreen(
     val introCtas = remember { Animatable(if (introOn) 0f else 1f) }
     val introSection = remember { Animatable(if (introOn) 0f else 1f) }
     var introDone by remember { mutableStateOf(!introOn) }
+    // Random fades out on the Colecciones placeholder (1 = shown); its button turns into "Volver".
+    val primaryShown = remember { Animatable(1f) }
+    // "Volver" moves up into Random's place, right under the title (0 = its own place, 1 = up).
+    val volverRise = remember { Animatable(0f) }
 
     fun animate(a: Animatable<Float, AnimationVector1D>, target: Float, spec: AnimationSpec<Float>) {
         scope.launch { if (reduceMotion) a.snapTo(target) else a.animateTo(target, spec) }
@@ -884,15 +892,17 @@ fun HomeScreen(
         nextPick = PreparedPick(album, loadCoverAndTheme(album))
     }
 
-    fun pickAlbum(origin: Offset) {
+    /** Picks a random album, or [chosen] when given (e.g. the widget's album of the day). */
+    fun pickAlbum(origin: Offset, chosen: SpotifyAlbum? = null) {
         addWave(origin)
         if (albums.isEmpty()) return
         action.job?.cancel()
         action.token++
         // Use the album prepared in the background when it's still valid; otherwise pick now.
-        val prepared = nextPick?.takeIf { p -> p.album.id != current?.id && albums.any { it.id == p.album.id } }
-        nextPick = null
-        val album = prepared?.album
+        val prepared = if (chosen != null) null
+        else nextPick?.takeIf { p -> p.album.id != current?.id && albums.any { it.id == p.album.id } }
+        if (chosen == null) nextPick = null
+        val album = chosen ?: prepared?.album
             ?: if (albums.size > 1) albums.filter { it.id != current?.id }.random() else albums[0]
         val cover = prepared?.load ?: loadCoverAndTheme(album)
         current = album
@@ -970,11 +980,15 @@ fun HomeScreen(
         action.job?.cancel()
         action.token++
         mode = Mode.Collections
-        animate(introCtas, 0f, tween(400, easing = CssEase))
+        animate(primaryShown, 0f, tween(400, easing = CssEase))
+        animate(volverRise, 1f, tween(600, easing = CtaEase))
         animate(sectionDrop, 1f, tween(500, easing = CssEase))
         animate(sectionAlpha, 0f, tween(400, easing = CssEase))
         val (size, _) = fitTitle(COLLECTIONS_TITLE)
         action.job = scope.launch {
+            launch {
+                typewrite({ secondaryText }, { secondaryText = it }, "Volver") { secondaryIcon = BackIcon }
+            }
             retitle(COLLECTIONS_TITLE, size, centered = false)
             announcement = COLLECTIONS_TITLE
         }
@@ -986,10 +1000,14 @@ fun HomeScreen(
         action.job?.cancel()
         action.token++
         mode = Mode.Home
-        animate(introCtas, 1f, tween(500, easing = CtaEase))
+        animate(primaryShown, 1f, tween(500, easing = CtaEase))
+        animate(volverRise, 0f, tween(600, easing = CtaEase))
         animate(sectionDrop, 0f, tween(500, easing = CssEase))
         animate(sectionAlpha, 1f, tween(400, easing = CssEase))
         action.job = scope.launch {
+            launch {
+                typewrite({ secondaryText }, { secondaryText = it }, "Colecciones") { secondaryIcon = CardsIcon }
+            }
             retitle(HOME_TITLE, HOME_SIZE_AUTO, centered = false)
             announcement = "Inicio"
         }
@@ -1000,6 +1018,17 @@ fun HomeScreen(
     }
 
     BackHandler(enabled = mode == Mode.Selected) { goHome() }
+
+    // Opened from the widget: once home is ready (after the intro), show that album.
+    LaunchedEffect(openAlbumId, introDone, albums) {
+        val id = openAlbumId ?: return@LaunchedEffect
+        if (!introDone || albums.isEmpty()) return@LaunchedEffect
+        onAlbumOpened()
+        val album = albums.firstOrNull { it.id == id } ?: return@LaunchedEffect
+        if (mode == Mode.Selected && current?.id == id) return@LaunchedEffect
+        if (mode == Mode.Collections) closeCollections()
+        pickAlbum(primaryCenter, album)
+    }
     BackHandler(enabled = mode == Mode.Collections) { closeCollections() }
 
     // Intro after the loading screen: type the title in, then spiral the background from the
@@ -1128,6 +1157,12 @@ fun HomeScreen(
                             .height(PRIMARY_H)
                             .focusRequester(randomFocus)
                             .onGloballyPositioned { primaryCenter = it.boundsInRoot().center }
+                            // A graphics layer only while hidden/fading (it also holds the ring, so the
+                            // ring fades too); none when shown, so the ring's blend reads the background.
+                            .then(
+                                if (primaryShown.value < 1f) Modifier.graphicsLayer { alpha = primaryShown.value }
+                                else Modifier
+                            )
                             .invertedRing()
                             .semantics { contentDescription = if (mode == Mode.Selected) "Escuchar" else "Random" }
                     ) {
@@ -1147,7 +1182,10 @@ fun HomeScreen(
                             when (mode) {
                                 Mode.Selected -> pickAlbum(secondaryCenter)
                                 Mode.Home -> openCollections(secondaryCenter)
-                                Mode.Collections -> {}
+                                Mode.Collections -> {
+                                    addWave(secondaryCenter)
+                                    closeCollections()
+                                }
                             }
                         },
                         shape = RoundedCornerShape(50),
@@ -1158,10 +1196,19 @@ fun HomeScreen(
                         ),
                         contentPadding = PaddingValues(horizontal = 16.dp),
                         modifier = Modifier
+                            // Up into Random's place on the Colecciones placeholder (layout offset,
+                            // so its tap target and wave origin move with it).
+                            .offset { IntOffset(0, -((PRIMARY_H + CTA_GAP).toPx() * volverRise.value).roundToInt()) }
                             .fillMaxWidth()
                             .height(SECONDARY_H)
                             .onGloballyPositioned { secondaryCenter = it.boundsInRoot().center }
-                            .semantics { contentDescription = if (mode == Mode.Selected) "Otro" else "Colecciones" }
+                            .semantics {
+                                contentDescription = when (mode) {
+                                    Mode.Selected -> "Otro"
+                                    Mode.Collections -> "Volver"
+                                    Mode.Home -> "Colecciones"
+                                }
+                            }
                     ) {
                         Icon(secondaryIcon, contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(Modifier.width(10.dp))
@@ -1349,6 +1396,17 @@ internal val ShuffleIcon: ImageVector = ImageVector.Builder(
     moveTo(21f, 16f); verticalLineToRelative(5f); horizontalLineToRelative(-5f)
     moveTo(15f, 15f); lineToRelative(6f, 6f)
     moveTo(4f, 4f); lineToRelative(5f, 5f)
+}.build()
+
+/** Left arrow ("Volver"). */
+private val BackIcon: ImageVector = ImageVector.Builder(
+    name = "Back", defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f
+).path(
+    stroke = SolidColor(Color.Black), strokeLineWidth = 2.6f,
+    strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round
+) {
+    moveTo(20f, 12f); horizontalLineTo(5f)
+    moveTo(11f, 5f); lineTo(4f, 12f); lineTo(11f, 19f)
 }.build()
 
 private val PlayIcon: ImageVector = ImageVector.Builder(

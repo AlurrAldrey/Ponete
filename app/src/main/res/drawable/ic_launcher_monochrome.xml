@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated pixel-art icon (17x17 grid of 3dp cells). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#FFFFFFFF" android:pathData="M46.5,28.5h15v3h-15zM40.5,31.5h6v3h-6zM52.5,31.5h15v3h-15zM37.5,34.5h3v3h-3zM46.5,34.5h3v3h-3zM58.5,34.5h12v3h-12zM34.5,37.5h3v3h-3zM40.5,37.5h3v3h-3zM46.5,37.5h15v3h-15zM64.5,37.5h9v3h-9zM31.5,40.5h3v3h-3zM37.5,40.5h3v3h-3zM43.5,40.5h6v3h-6zM58.5,40.5h6v3h-6zM67.5,40.5h9v3h-9zM31.5,43.5h6v3h-6zM40.5,43.5h3v3h-3zM46.5,43.5h3v3h-3zM58.5,43.5h3v3h-3zM64.5,43.5h3v3h-3zM70.5,43.5h6v3h-6zM28.5,46.5h18v3h-18zM61.5,46.5h18v3h-18zM28.5,49.5h6v3h-6zM37.5,49.5h3v3h-3zM67.5,49.5h3v3h-3zM73.5,49.5h6v3h-6zM28.5,52.5h6v3h-6zM37.5,52.5h3v3h-3zM67.5,52.5h3v3h-3zM73.5,52.5h6v3h-6zM28.5,55.5h6v3h-6zM37.5,55.5h3v3h-3zM67.5,55.5h3v3h-3zM73.5,55.5h6v3h-6zM28.5,58.5h18v3h-18zM61.5,58.5h18v3h-18zM31.5,61.5h6v3h-6zM40.5,61.5h3v3h-3zM46.5,61.5h3v3h-3zM58.5,61.5h3v3h-3zM70.5,61.5h6v3h-6zM31.5,64.5h9v3h-9zM43.5,64.5h6v3h-6zM58.5,64.5h3v3h-3zM67.5,64.5h9v3h-9zM34.5,67.5h9v3h-9zM46.5,67.5h6v3h-6zM58.5,67.5h3v3h-3zM64.5,67.5h9v3h-9zM37.5,70.5h12v3h-12zM58.5,70.5h12v3h-12zM40.5,73.5h27v3h-27zM46.5,76.5h15v3h-15z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M46.5,31.5h6v3h-6zM40.5,34.5h6v3h-6zM37.5,37.5h3v3h-3zM34.5,40.5h3v3h-3zM64.5,61.5h3v3h-3zM61.5,64.5h3v3h-3zM52.5,67.5h6v3h-6z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M49.5,43.5h9v3h-9zM46.5,46.5h15v3h-15zM43.5,49.5h21v3h-21zM43.5,52.5h9v3h-9zM55.5,52.5h9v3h-9zM43.5,55.5h21v3h-21zM46.5,58.5h15v3h-15zM49.5,61.5h9v3h-9z" />
+</vector>

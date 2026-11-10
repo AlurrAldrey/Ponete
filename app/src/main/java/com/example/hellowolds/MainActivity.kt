@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import com.example.hellowolds.home.ConnectScreen
 import com.example.hellowolds.home.HomeScreen
 import com.example.hellowolds.ui.theme.HelloWoldsTheme
+import com.example.hellowolds.widget.AlbumOfDayWidget
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
@@ -22,6 +23,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mainViewModel.handleSpotifyRedirect(intent)
+        mainViewModel.openAlbumFromWidget(intent?.getStringExtra(AlbumOfDayWidget.EXTRA_ALBUM_ID))
         enableEdgeToEdge()
         setContent {
             HelloWoldsTheme {
@@ -42,7 +44,9 @@ class MainActivity : ComponentActivity() {
                     HomeScreen(
                         albums = state.albums,
                         isLoading = state.isLoading,
-                        intro = homeIntro
+                        intro = homeIntro,
+                        openAlbumId = mainViewModel.pendingAlbumId,
+                        onAlbumOpened = mainViewModel::clearPendingAlbum
                     )
                 } else {
                     ConnectScreen(
@@ -66,5 +70,6 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         mainViewModel.handleSpotifyRedirect(intent)
+        mainViewModel.openAlbumFromWidget(intent.getStringExtra(AlbumOfDayWidget.EXTRA_ALBUM_ID))
     }
 }

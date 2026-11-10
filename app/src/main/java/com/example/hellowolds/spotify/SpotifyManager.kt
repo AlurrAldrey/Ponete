@@ -229,70 +229,115 @@ object SpotifyManager {
         }
     }
 
+    /** Spotify said "too many requests"; [retryAfterSec] is from the Retry-After header, if any. */
+    class RateLimitedException(val retryAfterSec: Long?, message: String) : Exception(message)
+
+    private class AlbumPage(val albums: List<SpotifyAlbum>, val total: Int, val next: String?)
+
+    private const val SAVED_ALBUMS_URL = "https://api.spotify.com/v1/me/albums?limit=50"
+
+    /** One page of saved albums (newest saved first). */
+    private fun fetchAlbumPage(accessToken: String, pageUrl: String): AlbumPage {
+        Log.d("SpotifyManager", "Fetching saved albums from: $pageUrl")
+        val connection = URL(pageUrl).openConnection() as HttpURLConnection
+        connection.requestMethod = "GET"
+        connection.setRequestProperty("Authorization", "Bearer $accessToken")
+
+        val responseCode = connection.responseCode
+        if (responseCode !in 200..299) {
+            val errorText = connection.errorStream?.bufferedReader()?.readText() ?: "HTTP $responseCode"
+            Log.e("SpotifyManager", "Error fetching saved albums ($responseCode): $errorText")
+            if (responseCode == 429) {
+                throw RateLimitedException(connection.getHeaderField("Retry-After")?.trim()?.toLongOrNull(), errorText)
+            }
+            throw Exception("Failed to fetch saved albums ($responseCode): $errorText")
+        }
+        val json = JSONObject(connection.inputStream.bufferedReader().readText())
+        val items = json.optJSONArray("items")
+        val albums = if (items == null) emptyList() else List(items.length()) { i ->
+            val itemObj = items.getJSONObject(i)
+            parseAlbum(itemObj.optJSONObject("album") ?: itemObj)
+        }
+        val next = if (json.has("next") && !json.isNull("next")) json.getString("next") else null
+        return AlbumPage(albums, json.optInt("total", albums.size), next)
+    }
+
+    private fun parseAlbum(albumObj: JSONObject): SpotifyAlbum {
+        val artistsArray = albumObj.optJSONArray("artists")
+        val artistName = if (artistsArray != null && artistsArray.length() > 0) {
+            artistsArray.getJSONObject(0).optString("name", "Unknown Artist")
+        } else "Unknown Artist"
+        val imagesArray = albumObj.optJSONArray("images")
+        val imageUrl = if (imagesArray != null && imagesArray.length() > 0) {
+            imagesArray.getJSONObject(0).optString("url")
+        } else null
+        return SpotifyAlbum(
+            id = albumObj.optString("id", ""),
+            name = albumObj.optString("name", "Unknown Album"),
+            artistName = artistName,
+            imageUrl = imageUrl,
+            totalTracks = albumObj.optInt("total_tracks", 0),
+            releaseDate = albumObj.optString("release_date", "")
+        )
+    }
+
+    /** The whole saved-albums library, page by page (about one request per 50 albums). */
     suspend fun fetchSavedAlbums(accessToken: String): Result<List<SpotifyAlbum>> = withContext(Dispatchers.IO) {
         try {
             val albumList = mutableListOf<SpotifyAlbum>()
-            var nextUrl: String? = "https://api.spotify.com/v1/me/albums?limit=50"
-
+            var nextUrl: String? = SAVED_ALBUMS_URL
             while (nextUrl != null) {
-                Log.d("SpotifyManager", "Fetching saved albums from: $nextUrl")
-                val url = URL(nextUrl)
-                val connection = url.openConnection() as HttpURLConnection
-                connection.requestMethod = "GET"
-                connection.setRequestProperty("Authorization", "Bearer $accessToken")
-
-                val responseCode = connection.responseCode
-                if (responseCode in 200..299) {
-                    val responseText = connection.inputStream.bufferedReader().readText()
-                    val json = JSONObject(responseText)
-                    val itemsArray = json.optJSONArray("items")
-
-                    if (itemsArray != null) {
-                        for (i in 0 until itemsArray.length()) {
-                            val itemObj = itemsArray.getJSONObject(i)
-                            val albumObj = itemObj.optJSONObject("album") ?: itemObj
-
-                            val id = albumObj.optString("id", "")
-                            val name = albumObj.optString("name", "Unknown Album")
-                            val totalTracks = albumObj.optInt("total_tracks", 0)
-                            val releaseDate = albumObj.optString("release_date", "")
-
-                            val artistsArray = albumObj.optJSONArray("artists")
-                            val artistName = if (artistsArray != null && artistsArray.length() > 0) {
-                                artistsArray.getJSONObject(0).optString("name", "Unknown Artist")
-                            } else "Unknown Artist"
-
-                            val imagesArray = albumObj.optJSONArray("images")
-                            val imageUrl = if (imagesArray != null && imagesArray.length() > 0) {
-                                imagesArray.getJSONObject(0).optString("url")
-                            } else null
-
-                            albumList.add(
-                                SpotifyAlbum(
-                                    id = id,
-                                    name = name,
-                                    artistName = artistName,
-                                    imageUrl = imageUrl,
-                                    totalTracks = totalTracks,
-                                    releaseDate = releaseDate
-                                )
-                            )
-                        }
-                    }
-
-                    nextUrl = if (json.has("next") && !json.isNull("next")) json.getString("next") else null
-                } else {
-                    val errorText = connection.errorStream?.bufferedReader()?.readText() ?: "HTTP $responseCode"
-                    Log.e("SpotifyManager", "Error fetching saved albums ($responseCode): $errorText")
-                    return@withContext Result.failure(Exception("Failed to fetch saved albums ($responseCode): $errorText"))
-                }
+                val page = fetchAlbumPage(accessToken, nextUrl)
+                albumList += page.albums
+                nextUrl = page.next
             }
-
             Log.d("SpotifyManager", "Successfully fetched ${albumList.size} saved albums")
             Result.success(albumList)
         } catch (e: Exception) {
             Log.e("SpotifyManager", "Exception fetching saved albums", e)
             Result.failure(e)
+        }
+    }
+
+    /**
+     * Brings a cached library up to date with as few requests as possible. Saved albums come
+     * newest first, so it reads pages from the top only until it reaches an album it already
+     * knows (usually just 1 request), and adds the new ones in front. If the total then doesn't
+     * match Spotify's (albums were removed), it falls back to a full download.
+     */
+    suspend fun syncSavedAlbums(accessToken: String, cached: List<SpotifyAlbum>?): Result<List<SpotifyAlbum>> {
+        if (cached.isNullOrEmpty()) return fetchSavedAlbums(accessToken)
+        return withContext(Dispatchers.IO) {
+            try {
+                val known = cached.mapTo(HashSet()) { it.id }
+                val newAlbums = mutableListOf<SpotifyAlbum>()
+                var nextUrl: String? = SAVED_ALBUMS_URL
+                var total = -1
+                var reachedKnown = false
+                while (nextUrl != null && !reachedKnown) {
+                    val page = fetchAlbumPage(accessToken, nextUrl)
+                    total = page.total
+                    for (album in page.albums) {
+                        if (album.id in known) {
+                            reachedKnown = true
+                            break
+                        }
+                        newAlbums += album
+                    }
+                    nextUrl = page.next
+                }
+                val merged = newAlbums + cached
+                if (merged.size == total) {
+                    Log.d("SpotifyManager", "Library up to date: ${newAlbums.size} new, $total total")
+                    Result.success(merged)
+                } else {
+                    Log.d("SpotifyManager", "Library changed (${merged.size} vs $total), refetching all")
+                    fetchSavedAlbums(accessToken)
+                }
+            } catch (e: Exception) {
+                Log.e("SpotifyManager", "Exception syncing saved albums", e)
+                Result.failure(e)
+            }
         }
     }
 }

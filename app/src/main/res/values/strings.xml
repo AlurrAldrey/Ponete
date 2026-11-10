@@ -1,3 +1,6 @@
 <resources>
-    <string name="app_name">Hello Wolds</string>
+    <string name="app_name">Gordo!</string>
+    <string name="widget_label">DISCO DEL DÍA</string>
+    <string name="widget_description">El disco del día de tu biblioteca</string>
+    <string name="widget_empty">Abrí Gordo! para cargar tus discos</string>
 </resources>
